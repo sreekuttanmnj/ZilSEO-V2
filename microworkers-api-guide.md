@@ -40,7 +40,7 @@
 - `categoryId`: string (fetch from configuration endpoint)
 - `title`: string
 - `description`: string
-- `paymentPerTask`: number (e.g., 0.15)
+- `paymentPerTask`: number (e.g., 0.06)
 - `minutesToFinish`: number (e.g., 30)
 - `speed`: number (1000 = fastest)
 - `ttr`: number (time to review in days, e.g., 7)
@@ -84,7 +84,7 @@
   "qtRequired": true,
   "removePositionOnNokRating": false,
   "description": "Search Google for specific keyword and engage with result",
-  "paymentPerTask": 0.15,
+  "paymentPerTask": 0.06,
   "autoSkipTask": {
     "enabled": false,
     "timeLimit": 120
@@ -138,4 +138,4 @@ Fetch available categories from:
 2. Fetch valid category IDs from configuration endpoint
 3. Start with small number of positions (10-30) for testing
 4. Use appropriate zone configuration (international vs targeted)
-5. Set reasonable payment (minimum $0.10)
+5. Set reasonable payment (minimum $0.06)
