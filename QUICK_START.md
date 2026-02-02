@@ -73,7 +73,7 @@ When you click the toggle button, the system:
      "title": "Google: Search + Visit + Share",
      "description": "...",
      "categoryId": "[fetched ID]",
-     "paymentPerTask": 0.07,
+     "paymentPerTask": 0.06,
      "availablePositions": 30,
      "minutesToFinish": 30,
      "internalTemplate": {
@@ -92,7 +92,7 @@ When you click the toggle button, the system:
 ## Campaign Settings
 
 Default settings (configured in `mockService.ts`):
-- **Payment per task**: $0.15
+- **Payment per task**: $0.06
 - **Available positions**: 30 workers
 - **Time to finish**: 30 minutes
 - **Time to review (TTR)**: 7 days

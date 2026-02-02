@@ -256,7 +256,7 @@ app.post('/api/mw/campaigns/create', async (req, res) => {
             description: req.body.description || 'Campaign created via API',
 
             // Financial
-            paymentPerTask: req.body.payment || req.body.paymentPerTask || 0.06,
+            paymentPerTask: 0.06, // Fixed fee forced by policy
 
             // Positions & Timing
             availablePositions: Math.max(30, Number(req.body.positions || req.body.availablePositions || 30)),
