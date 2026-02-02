@@ -1,0 +1,14 @@
+﻿Fetching available categories...
+
+Γ£à Found 10 categories:
+
+1. ID: 04 - "Qualification"
+2. ID: 05 - "Offer/Sign up"
+3. ID: 06 - "Content Moderation"
+4. ID: 07 - "Data Transcription"
+5. ID: 08 - "Content Translation"
+6. ID: 09 - "Data Collection/Mining/Extraction/AI Training"
+7. ID: 10 - "SEO & Web Traffic"
+8. ID: 11 - "Data Annotation"
+9. ID: 20 - "Video/Music Sharing Platforms"
+10. ID: 23 - "Social Media"

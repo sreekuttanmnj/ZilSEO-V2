@@ -1,0 +1,11 @@
+﻿Testing backend connection...
+
+1. Health Check
+Γ£à Server is running
+Status: ok
+
+2. Fetching Categories
+Γ£à Categories fetched: 10 items
+  First category: Qualification (ID: 04)
+
+≡ƒÄë Backend is configured correctly!

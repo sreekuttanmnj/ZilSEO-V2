@@ -1,0 +1,8 @@
+﻿Testing backend connection...
+
+1. Health Check
+Γ£à Server is running
+Status: ok
+
+2. Fetching Categories
+Γ¥î Categories failed: {"error":"Microworkers API Error","status":404,"details":"<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=de"}
