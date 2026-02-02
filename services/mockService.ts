@@ -409,7 +409,10 @@ const fetchWithNetworkCheck = async (url: string, options?: RequestInit) => {
 
 export const MockService = {
   isSupabaseActive: () => {
-    return !!import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL !== 'https://placeholder.supabase.co';
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    const isActive = !!url && url !== 'https://placeholder.supabase.co';
+    // console.debug('[MockService] Supabase Active:', isActive, url);
+    return isActive;
   },
 
   getBackendUrl: () => BACKEND_URL,
@@ -1241,7 +1244,7 @@ export const MockService = {
         categoryId: safeCategoryId,
         availablePositions: positions,
         minutesToFinish: 15,
-        paymentPerTask: 0.15,
+        paymentPerTask: 0.06,
         speed: 1000,
         ttr: 7,
         internationalZone: { id: "int", excludedCountries: [] },
@@ -1805,165 +1808,165 @@ export const MockService = {
 
         // URL length heuristic (longer URLs often indicate articles)
         if (lastSegment.length > 40) postScore += 1;
-        else if(lastSegment.length < 20) pageScore += 1;
+        else if (lastSegment.length < 20) pageScore += 1;
 
-  // Check for publication date in metadata
-  const pubDateSelectors = [
-    'meta[property="article:published_time"]',
-    'meta[name="publish_date"]',
-    'meta[name="date"]',
-    'time[pubdate]',
-    'time[datetime]',
-    '.published-date',
-    '.post-date',
-    '.entry-date'
-  ];
+        // Check for publication date in metadata
+        const pubDateSelectors = [
+          'meta[property="article:published_time"]',
+          'meta[name="publish_date"]',
+          'meta[name="date"]',
+          'time[pubdate]',
+          'time[datetime]',
+          '.published-date',
+          '.post-date',
+          '.entry-date'
+        ];
 
-  let hasPublishDate = false;
-  for(const selector of pubDateSelectors) {
-    const el = doc.querySelector(selector);
-    if (el) {
-      const dateValue = el.getAttribute('content') || el.getAttribute('datetime') || el.textContent || '';
-      if (dateValue && /20\d{2}/.test(dateValue)) {
-        hasPublishDate = true;
-        break;
-      }
-    }
-  }
-        if(hasPublishDate) postScore += 3;
+        let hasPublishDate = false;
+        for (const selector of pubDateSelectors) {
+          const el = doc.querySelector(selector);
+          if (el) {
+            const dateValue = el.getAttribute('content') || el.getAttribute('datetime') || el.textContent || '';
+            if (dateValue && /20\d{2}/.test(dateValue)) {
+              hasPublishDate = true;
+              break;
+            }
+          }
+        }
+        if (hasPublishDate) postScore += 3;
 
-  // Check for article type in schema.org
-  const articleTypes = ['article', 'blogposting', 'newsarticle'];
-  const schemas = doc.querySelectorAll('script[type="application/ld+json"]');
-  schemas.forEach(script => {
-    try {
-      const json = JSON.parse(script.textContent || '{}');
-const schemas = Array.isArray(json) ? json : [json];
-schemas.forEach(schema => {
-  const type = (schema['@type'] || '').toLowerCase();
-  if (articleTypes.includes(type)) postScore += 3;
-  else if (type === 'webpage') pageScore += 1;
-});
+        // Check for article type in schema.org
+        const articleTypes = ['article', 'blogposting', 'newsarticle'];
+        const schemas = doc.querySelectorAll('script[type="application/ld+json"]');
+        schemas.forEach(script => {
+          try {
+            const json = JSON.parse(script.textContent || '{}');
+            const schemas = Array.isArray(json) ? json : [json];
+            schemas.forEach(schema => {
+              const type = (schema['@type'] || '').toLowerCase();
+              if (articleTypes.includes(type)) postScore += 3;
+              else if (type === 'webpage') pageScore += 1;
+            });
           } catch (e) { }
         });
 
-// Check for blog/article indicators in HTML
-const hasArticleTag = doc.querySelector('article') !== null;
-const hasBlogClass = html.match(/class="[^"]*\b(blog|post|article|entry)\b[^"]*"/i);
-const hasCategoryTags = doc.querySelectorAll('.category, .tag, .categories, .tags').length > 0;
-const hasAuthor = doc.querySelector('meta[name="author"]') ||
-  doc.querySelector('[rel="author"]') ||
-  doc.querySelector('.author, .by-author, .post-author');
+        // Check for blog/article indicators in HTML
+        const hasArticleTag = doc.querySelector('article') !== null;
+        const hasBlogClass = html.match(/class="[^"]*\b(blog|post|article|entry)\b[^"]*"/i);
+        const hasCategoryTags = doc.querySelectorAll('.category, .tag, .categories, .tags').length > 0;
+        const hasAuthor = doc.querySelector('meta[name="author"]') ||
+          doc.querySelector('[rel="author"]') ||
+          doc.querySelector('.author, .by-author, .post-author');
 
-if (hasArticleTag) postScore += 1;
-if (hasBlogClass) postScore += 1;
-if (hasCategoryTags) postScore += 2;
-if (hasAuthor) postScore += 1;
+        if (hasArticleTag) postScore += 1;
+        if (hasBlogClass) postScore += 1;
+        if (hasCategoryTags) postScore += 2;
+        if (hasAuthor) postScore += 1;
 
-// Check content length (articles tend to be longer)
-if (content.length > 15) postScore += 1;
+        // Check content length (articles tend to be longer)
+        if (content.length > 15) postScore += 1;
         else if (content.length < 10) pageScore += 1;
 
-// Check for common page identifiers
-const pageIndicators = ['pricing', 'contact', 'about', 'services', 'products',
-  'features', 'demo', 'signup', 'login', 'register'];
-const titleLower = (title || '').toLowerCase();
-const h1Lower = h1Tag.toLowerCase();
+        // Check for common page identifiers
+        const pageIndicators = ['pricing', 'contact', 'about', 'services', 'products',
+          'features', 'demo', 'signup', 'login', 'register'];
+        const titleLower = (title || '').toLowerCase();
+        const h1Lower = h1Tag.toLowerCase();
 
-pageIndicators.forEach(indicator => {
-  if (titleLower.includes(indicator) || h1Lower.includes(indicator)) {
-    pageScore += 2;
-  }
-});
+        pageIndicators.forEach(indicator => {
+          if (titleLower.includes(indicator) || h1Lower.includes(indicator)) {
+            pageScore += 2;
+          }
+        });
 
-// Final decision
-console.log(`[Content Type Detection] URL: ${targetUrl} | Page Score: ${pageScore} | Post Score: ${postScore}`);
-return postScore > pageScore ? 'post' : 'page';
+        // Final decision
+        console.log(`[Content Type Detection] URL: ${targetUrl} | Page Score: ${pageScore} | Post Score: ${postScore}`);
+        return postScore > pageScore ? 'post' : 'page';
       };
 
-const detectedType = detectContentType();
+      const detectedType = detectContentType();
 
-return {
-  title,
-  metaTitle,
-  metaDescription,
-  keywords,
-  keyword,
-  content,
-  faqs,
-  contentType: detectedType  // Add detected type
-};
+      return {
+        title,
+        metaTitle,
+        metaDescription,
+        keywords,
+        keyword,
+        content,
+        faqs,
+        contentType: detectedType  // Add detected type
+      };
     } catch (error) {
-  console.error("Auto-fill parsing error:", error);
-  throw error;
-}
+      console.error("Auto-fill parsing error:", error);
+      throw error;
+    }
   },
 
-// Detect content type from URL only (fast, no scraping)
-detectContentTypeFromUrl: (url: string): 'page' | 'post' => {
-  const urlPath = url.toLowerCase();
-  const pathSegments = urlPath.split('/').filter(s => s.length > 0);
-  const lastSegment = pathSegments[pathSegments.length - 1] || '';
+  // Detect content type from URL only (fast, no scraping)
+  detectContentTypeFromUrl: (url: string): 'page' | 'post' => {
+    const urlPath = url.toLowerCase();
+    const pathSegments = urlPath.split('/').filter(s => s.length > 0);
+    const lastSegment = pathSegments[pathSegments.length - 1] || '';
 
-  let pageScore = 0;
-  let postScore = 0;
+    let pageScore = 0;
+    let postScore = 0;
 
-  // Post indicators in URL
-  const postUrlPatterns = [
-    /\/blog\//i, /\/article\//i, /\/post\//i, /\/news\//i,
-    /-(202[0-9]|20[3-9][0-9])[-\/]?/,  // Year patterns (2020-2099)
-    /\d{4}\/\d{2}\/\d{2}/,              // Date format in URL
-    /\/(how|what|why|when|where|guide|tips|best|top)-/i  // Article-style keywords
-  ];
+    // Post indicators in URL
+    const postUrlPatterns = [
+      /\/blog\//i, /\/article\//i, /\/post\//i, /\/news\//i,
+      /-(202[0-9]|20[3-9][0-9])[-\/]?/,  // Year patterns (2020-2099)
+      /\d{4}\/\d{2}\/\d{2}/,              // Date format in URL
+      /\/(how|what|why|when|where|guide|tips|best|top)-/i  // Article-style keywords
+    ];
 
-  // Page indicators in URL
-  const pageUrlPatterns = [
-    /\/features?\/?$/i, /\/pricing\/?$/i, /\/contact\/?$/i,
-    /\/about\/?$/i, /\/services?\/?$/i, /\/products?\/?$/i,
-    /\/demo\/?$/i, /\/signup\/?$/i, /\/login\/?$/i
-  ];
+    // Page indicators in URL
+    const pageUrlPatterns = [
+      /\/features?\/?$/i, /\/pricing\/?$/i, /\/contact\/?$/i,
+      /\/about\/?$/i, /\/services?\/?$/i, /\/products?\/?$/i,
+      /\/demo\/?$/i, /\/signup\/?$/i, /\/login\/?$/i
+    ];
 
-  postUrlPatterns.forEach(pattern => {
-    if (pattern.test(urlPath)) postScore += 2;
-  });
+    postUrlPatterns.forEach(pattern => {
+      if (pattern.test(urlPath)) postScore += 2;
+    });
 
-  pageUrlPatterns.forEach(pattern => {
-    if (pattern.test(urlPath)) pageScore += 2;
-  });
+    pageUrlPatterns.forEach(pattern => {
+      if (pattern.test(urlPath)) pageScore += 2;
+    });
 
-  // URL segment count (articles often have more segments)
-  if (pathSegments.length > 3) postScore += 1;
+    // URL segment count (articles often have more segments)
+    if (pathSegments.length > 3) postScore += 1;
     else if (pathSegments.length <= 2) pageScore += 1;
 
-  // URL length heuristic (longer URLs often indicate articles)
-  if (lastSegment.length > 40) postScore += 1;
+    // URL length heuristic (longer URLs often indicate articles)
+    if (lastSegment.length > 40) postScore += 1;
     else if (lastSegment.length < 20) pageScore += 1;
 
-  // Check for common page keywords in last segment
-  const pageKeywords = ['pricing', 'contact', 'about', 'services', 'products',
-    'features', 'demo', 'signup', 'login', 'register', 'tool', 'calculator'];
-  pageKeywords.forEach(keyword => {
-    if (lastSegment.includes(keyword)) pageScore += 2;
-  });
+    // Check for common page keywords in last segment
+    const pageKeywords = ['pricing', 'contact', 'about', 'services', 'products',
+      'features', 'demo', 'signup', 'login', 'register', 'tool', 'calculator'];
+    pageKeywords.forEach(keyword => {
+      if (lastSegment.includes(keyword)) pageScore += 2;
+    });
 
-  console.log(`[URL Detection] ${url} | Page: ${pageScore} | Post: ${postScore}`);
-  return postScore > pageScore ? 'post' : 'page';
-},
+    console.log(`[URL Detection] ${url} | Page: ${pageScore} | Post: ${postScore}`);
+    return postScore > pageScore ? 'post' : 'page';
+  },
 
-// Tracking
-getTrackingData: async (websiteId?: string): Promise<{ targets: KeywordTarget[], rankings: KeywordRanking[] }> => {
-  if (MockService.isSupabaseActive() && websiteId) {
-    const targets = await SupabaseService.getKeywordTargets(websiteId);
-    const targetIds = targets.map(t => t.id);
-    const rankings = await SupabaseService.getKeywordRankings(targetIds);
-    return { targets, rankings };
-  }
-  await delay(200);
-  return {
-    targets: websiteId ? MOCK_TARGETS.filter(t => t.websiteId === websiteId) : MOCK_TARGETS,
-    rankings: MOCK_RANKINGS
-  };
-},
+  // Tracking
+  getTrackingData: async (websiteId?: string): Promise<{ targets: KeywordTarget[], rankings: KeywordRanking[] }> => {
+    if (MockService.isSupabaseActive() && websiteId) {
+      const targets = await SupabaseService.getKeywordTargets(websiteId);
+      const targetIds = targets.map(t => t.id);
+      const rankings = await SupabaseService.getKeywordRankings(targetIds);
+      return { targets, rankings };
+    }
+    await delay(200);
+    return {
+      targets: websiteId ? MOCK_TARGETS.filter(t => t.websiteId === websiteId) : MOCK_TARGETS,
+      rankings: MOCK_RANKINGS
+    };
+  },
 
   addTrackingTarget: async (target: KeywordTarget): Promise<void> => {
     if (MockService.isSupabaseActive()) {
@@ -1974,504 +1977,504 @@ getTrackingData: async (websiteId?: string): Promise<{ targets: KeywordTarget[],
     saveData(STORAGE_KEYS.TARGETS, MOCK_TARGETS);
   },
 
-    deleteTrackingTarget: async (id: string): Promise<void> => {
+  deleteTrackingTarget: async (id: string): Promise<void> => {
+    if (MockService.isSupabaseActive()) {
+      await SupabaseService.deleteKeywordTarget(id);
+      return;
+    }
+    const index = MOCK_TARGETS.findIndex(t => t.id === id);
+    if (index !== -1) {
+      MOCK_TARGETS.splice(index, 1);
+      saveData(STORAGE_KEYS.TARGETS, MOCK_TARGETS);
+    }
+  },
+
+  // Work
+  getWorkItems: async (websiteId?: string): Promise<WorkItem[]> => {
+    if (MockService.isSupabaseActive()) {
+      return SupabaseService.getWorkItems(websiteId);
+    }
+    await delay(200);
+    return MOCK_WORK;
+  },
+
+  syncWorkTasks: async (websiteId?: string): Promise<void> => {
+    let campaigns: { id: string, sourceTitle: string, sourceUrl?: string, websiteId: string }[] = [];
+
+    const fetchCampaignsForSite = async (sid: string) => {
+      let site: Website | undefined;
       if (MockService.isSupabaseActive()) {
-        await SupabaseService.deleteKeywordTarget(id);
+        const sites = await SupabaseService.getWebsites();
+        site = sites.find(w => w.id === sid);
+      } else {
+        site = MOCK_WEBSITES.find(w => w.id === sid);
+      }
+      if (!site) return [];
+
+      const currentCamps: typeof campaigns = [];
+      const pages = await MockService.getPages(sid);
+      pages.filter(p => p.mwCampaignId).forEach(p => currentCamps.push({ id: p.mwCampaignId!, sourceTitle: p.title, sourceUrl: p.url, websiteId: sid }));
+
+      const posts = await MockService.getPosts(sid);
+      posts.filter(p => p.mwCampaignId).forEach(p => currentCamps.push({ id: p.mwCampaignId!, sourceTitle: p.title, sourceUrl: p.url, websiteId: sid }));
+
+      if (site.socialLinks) {
+        site.socialLinks.filter(s => s.mwCampaignId).forEach(s => {
+          currentCamps.push({ id: s.mwCampaignId!, sourceTitle: `${s.platform} Profile`, sourceUrl: s.url, websiteId: sid });
+        });
+      }
+
+      const externals = await MockService.getExternalLinks(sid);
+      externals.filter(e => e.mwCampaignId).forEach(e => {
+        let url = e.landingPageDomain;
+        if (url && !url.startsWith('http')) url = 'https://' + url;
+        currentCamps.push({ id: e.mwCampaignId!, sourceTitle: e.title, sourceUrl: url, websiteId: sid });
+      });
+
+      return currentCamps;
+    };
+
+    // 1. Fetch ALL currently active campaigns from Microworkers to verify what's "Live"
+    let liveCampaignIds = new Set<string>();
+    try {
+      const liveRes = await fetchWithNetworkCheck(`${BACKEND_URL}/api/mw/campaigns`);
+      if (liveRes.ok) {
+        const liveData = await liveRes.json();
+        const items = liveData.items || liveData.campaigns || [];
+        items.forEach((c: any) => {
+          // Consider RUNNING, FINISHED, PAUSED, and STOPPED as valid for checking tasks
+          // Basically anything that isn't deleted or rejected
+          if (['RUNNING', 'FINISHED', 'PAUSED', 'STOPPED'].includes(c.status)) {
+            liveCampaignIds.add(c.id);
+          }
+        });
+        console.log(`[MW Sync] Verified ${liveCampaignIds.size} live campaigns from API.`);
+      }
+    } catch (e) {
+      console.warn("[MW Sync] Could not fetch live campaign list, falling back to all known IDs.", e);
+    }
+
+    if (websiteId) {
+      campaigns = await fetchCampaignsForSite(websiteId);
+    } else {
+      const sites = await (MockService.isSupabaseActive() ? SupabaseService.getWebsites() : Promise.resolve(MOCK_WEBSITES));
+      for (const s of sites) {
+        const c = await fetchCampaignsForSite(s.id);
+        campaigns.push(...c);
+      }
+    }
+
+    // Filter: Only sync campaigns that are actually in the "Live" list from MW
+    // This solves the 404 issue for deleted/archived campaigns
+    if (liveCampaignIds.size > 0) {
+      const originalCount = campaigns.length;
+      campaigns = campaigns.filter(c => liveCampaignIds.has(c.id));
+      console.log(`[MW Sync] Filtered ${originalCount} down to ${campaigns.length} live campaigns.`);
+    } else if (!websiteId) {
+      // If Global Sync and we couldn't fetch live IDs, 
+      // DON'T fallback to all known campaigns because it will trigger 404s for old ones.
+      console.warn("[MW Sync] No live campaigns found from API. Skipping global sync to avoid 404 errors.");
+      return;
+    }
+
+    if (campaigns.length === 0) return;
+
+    try {
+      for (const camp of campaigns) {
+        console.log(`[MW Sync] Fetching tasks for campaign: ${camp.id} (${camp.sourceTitle})`);
+
+        let mwTasks: any[] = [];
+        let fetchSuccess = false;
+
+        // For "Only Live Tasks", we primarily care about SUBMITTED (NOTRATED)
+        // If the user wants to see finished/rated ones, they are in the 'Reviewed' section
+        const statusFilters = ['SUBMITTED', 'REVISION_NEEDED'];
+
+        for (const statusFilter of statusFilters) {
+          try {
+            const url = statusFilter
+              ? `${BACKEND_URL}/api/mw/campaigns/${camp.id}/tasks?status=${statusFilter}&limit=100`
+              : `${BACKEND_URL}/api/mw/campaigns/${camp.id}/tasks?limit=100`;
+
+            console.log(`[MW Sync] Trying: ${url}`);
+            const response = await fetchWithNetworkCheck(url);
+
+            if (response.ok) {
+              const data = await response.json();
+
+              // Robust task detection (MW v2 uses 'items' or 'slots', v1 used 'tasks')
+              let tasks: any[] = [];
+              if (Array.isArray(data)) {
+                tasks = data;
+              } else if (data.items && Array.isArray(data.items)) {
+                tasks = data.items;
+              } else if (data.slots && Array.isArray(data.slots)) {
+                tasks = data.slots;
+              } else if (data.tasks && Array.isArray(data.tasks)) {
+                tasks = data.tasks;
+              }
+
+              // Merge tasks (avoid duplicates by ID)
+              tasks.forEach((task: any) => {
+                const taskId = task.id || task.taskId || task.TId;
+                if (taskId) {
+                  const existingIndex = mwTasks.findIndex(t => (t.id === taskId || t.taskId === taskId));
+                  if (existingIndex === -1) {
+                    mwTasks.push(task);
+                  } else {
+                    // Update existing if new data has status or proofs
+                    mwTasks[existingIndex] = { ...mwTasks[existingIndex], ...task };
+                  }
+                }
+              });
+
+              fetchSuccess = true;
+            } else {
+              console.warn(`[MW Sync] Failed with status "${statusFilter}": ${response.status}`);
+            }
+          } catch (err: any) {
+            console.warn(`[MW Sync] Error with status "${statusFilter}": ${err.message}`);
+          }
+        }
+
+        if (!fetchSuccess || mwTasks.length === 0) {
+          console.log(`[MW Sync] No tasks found for campaign ${camp.id}`);
+          continue;
+        }
+
+        for (const mwTask of mwTasks) {
+          const mwTaskRealId = mwTask.id || mwTask.taskId || mwTask.TId;
+          const mwId = `mw_${mwTaskRealId}`;
+
+          const { data: existing } = await supabase.from('work_items').select('*').eq('id', mwId).maybeSingle();
+
+          // Map MW status to internal WorkItem status
+          const mwStatusOriginal = (mwTask.status || '').toUpperCase();
+          let mappedStatus: WorkItem['status'] = 'completed'; // Default to Need Review
+
+          if (['RATED', 'APPROVED', 'FINISHED', 'DONE'].includes(mwStatusOriginal)) mappedStatus = 'done';
+          else if (['DENIED', 'REJECTED'].includes(mwStatusOriginal)) mappedStatus = 'rejected';
+          else if (['REVISION_NEEDED', 'REVISE'].includes(mwStatusOriginal)) mappedStatus = 'needs_revision';
+          else if (['QUIT', 'SYSTEM_REJECTED'].includes(mwStatusOriginal)) mappedStatus = 'todo'; // Or remove?
+
+          // Logic to determine if we need to fetch details or update status
+          // Update if: New task, missing proof, or status changed on MW
+          const isNew = !existing;
+          const missingProof = !existing?.proof_link;
+          const statusChanged = existing && existing.status !== mappedStatus && existing.status === 'completed'; // Only auto-update if it was pending review
+
+          if (isNew || missingProof || statusChanged) {
+            let fullTask = mwTask;
+            if (isNew || missingProof) {
+              try {
+                const detailRes = await fetchWithNetworkCheck(`${BACKEND_URL}/api/mw/campaigns/${camp.id}/tasks/${mwTaskRealId}`);
+                if (detailRes.ok) {
+                  fullTask = await detailRes.json();
+                }
+              } catch (e) {
+                console.warn(`[MW Sync] Could not fetch details for ${mwId}`);
+              }
+            }
+
+            let workerId = fullTask.workerId || fullTask.worker_id || 'unknown';
+            if (workerId === 'unknown' && typeof mwTaskRealId === 'string') {
+              const parts = mwTaskRealId.split('_');
+              if (parts.length >= 3) workerId = parts[2];
+            }
+
+            // Comprehensive proof extractor for all Microworkers campaign types
+            const collectAllProofs = (taskObj: any) => {
+              const textProofs: { question: string, answer: string }[] = [];
+              const fileProofs: { url: string, name?: string }[] = [];
+
+              // 1. Check for TTV structured answers
+              const rawAnswers = taskObj.answers || taskObj.items || [];
+              if (Array.isArray(rawAnswers)) {
+                rawAnswers.forEach((ans: any, idx: number) => {
+                  const q = ans.title || ans.question || `Proof ${idx + 1}`;
+                  const a = ans.value || ans.text || ans.answer || '';
+                  if (a) textProofs.push({ question: q, answer: String(a) });
+                });
+              } else if (typeof rawAnswers === 'object' && rawAnswers !== null) {
+                // Sometimes it's a map
+                Object.entries(rawAnswers).forEach(([key, val]) => {
+                  textProofs.push({ question: key, answer: String(val) });
+                });
+              }
+
+              // 2. Check for file proofs
+              const rawFiles = taskObj.fileProofs || taskObj.files || [];
+              if (Array.isArray(rawFiles)) {
+                rawFiles.forEach((f: any) => {
+                  const url = typeof f === 'string' ? f : (f.url || f.link);
+                  if (url) fileProofs.push({ url, name: f.filename || f.name || 'Screenshot' });
+                });
+              }
+
+              // 3. Fallback: Search the object for anything that looks like a proof URL if empty
+              if (textProofs.length === 0 && fileProofs.length === 0) {
+                const search = (item: any) => {
+                  if (!item) return;
+                  if (typeof item === 'string') {
+                    const val = item.trim();
+                    if (/^https?:\/\//i.test(val)) {
+                      if (val.match(/\.(jpg|jpeg|png|gif|webp|pdf)$/i) || val.includes('snipboard.io') || val.includes('prnt.sc')) {
+                        fileProofs.push({ url: val, name: 'Proof Link' });
+                      } else {
+                        textProofs.push({ question: 'Proof', answer: val });
+                      }
+                    } else if (val.length > 5 && val.includes(' ') && !val.includes('_')) {
+                      textProofs.push({ question: 'Proof', answer: val });
+                    }
+                  } else if (Array.isArray(item)) {
+                    item.forEach(search);
+                  } else if (typeof item === 'object') {
+                    Object.values(item).forEach(search);
+                  }
+                };
+                search(taskObj);
+              }
+
+              return { textProofs, fileProofs };
+            };
+
+            const extracted = collectAllProofs(fullTask);
+            const proofLink = extracted.fileProofs[0]?.url || extracted.textProofs[0]?.answer || '';
+
+            // Debug info if proof is missing
+            let debugInfo = '';
+            if (!proofLink) {
+              const keys = Object.keys(fullTask).filter(k => !['description', 'id'].includes(k));
+              debugInfo = `\n[No proof found. Keys: ${keys.join(', ')}]`;
+            }
+
+            const newItem: WorkItem = {
+              id: mwId,
+              websiteId: camp.websiteId,
+              title: `Verify: ${camp.sourceTitle}`,
+              description: `Worker ${workerId} submitted proof for ${camp.sourceTitle}${debugInfo}`,
+              status: mappedStatus,
+              priority: 'medium',
+              assignedToUserId: 'worker',
+              dueDate: fullTask.submittedAt?.split('T')[0] || fullTask.date || new Date().toISOString().split('T')[0],
+              workerId: workerId,
+              proofLink: proofLink,
+              proofs: extracted.textProofs,
+              fileProofs: extracted.fileProofs,
+              mwCampaignId: camp.id,
+              targetUrl: camp.sourceUrl
+            };
+
+            const { error: saveErr } = await supabase.from('work_items').upsert([{
+              id: newItem.id,
+              website_id: newItem.websiteId,
+              title: newItem.title,
+              description: newItem.description,
+              status: newItem.status,
+              priority: newItem.priority,
+              assigned_to_user_id: newItem.assignedToUserId,
+              due_date: newItem.dueDate,
+              worker_id: newItem.workerId,
+              proof_link: newItem.proofLink,
+              proofs: newItem.proofs,
+              file_proofs: newItem.fileProofs,
+              mw_campaign_id: newItem.mwCampaignId,
+              target_url: newItem.targetUrl
+            }]);
+
+            if (saveErr) {
+              console.error(`[MW Sync] Supabase Save Error for ${mwId}:`, saveErr);
+            } else {
+              console.log(`[MW Sync] Saved task ${mwId} (Status: ${newItem.status})`);
+            }
+          }
+        }
+      }
+      if (!MockService.isSupabaseActive()) {
+        saveData(STORAGE_KEYS.WORK, MOCK_WORK);
+      }
+    } catch (error) {
+      console.error("Failed to sync Microworkers tasks:", error);
+      throw error;
+    }
+  },
+
+  addWorkItem: async (item: WorkItem): Promise<void> => {
+    if (MockService.isSupabaseActive()) {
+      await supabase.from('work_items').insert([{
+        id: item.id.includes('-') ? item.id : undefined,
+        website_id: item.websiteId,
+        title: item.title,
+        description: item.description,
+        assigned_to_user_id: item.assignedToUserId,
+        due_date: item.dueDate,
+        status: item.status,
+        priority: item.priority,
+        proof_link: item.proofLink,
+        worker_id: item.workerId,
+        mw_campaign_id: item.mwCampaignId,
+        rejection_reason: item.rejectionReason
+      }]);
+      return;
+    }
+    MOCK_WORK.push(item);
+  },
+
+  updateWorkItemStatus: async (id: string, status: WorkItem['status'], reason?: string, campaignId?: string): Promise<void> => {
+    // 1. If it's a Microworkers task (starts with mw_), try to rate it on MW
+    if (id.startsWith('mw_')) {
+      // Use provided campaignId or try to find it in existing tasks
+      let finalCampId = campaignId;
+      if (!finalCampId && MockService.isSupabaseActive()) {
+        const { data } = await supabase.from('work_items').select('mw_campaign_id').eq('id', id).maybeSingle();
+        finalCampId = data?.mw_campaign_id;
+      }
+
+      if (finalCampId) {
+        const mwTaskId = id.replace('mw_', '');
+        let rating: 'OK' | 'NOK' | 'REVISE' | null = null;
+        if (status === 'done') rating = 'OK';
+        if (status === 'rejected') rating = 'NOK';
+        if (status === 'needs_revision') rating = 'REVISE';
+
+        if (rating) {
+          try {
+            await MockService.rateMicroworkersTask(finalCampId, mwTaskId, rating, reason);
+          } catch (e: any) {
+            console.error("MW Rating failed:", e);
+            throw new Error(`Failed to rate task on Microworkers: ${e.message}`);
+          }
+        }
+      } else {
+        console.warn(`[MW] Could not find campaign ID for task ${id}, skipping MW rating.`);
+      }
+    }
+
+    if (MockService.isSupabaseActive()) {
+      await SupabaseService.updateWorkItemStatus(id, status, reason);
+      return;
+    }
+    const item = MOCK_WORK.find(w => w.id === id);
+    if (item) {
+      item.status = status;
+      if (reason) item.rejectionReason = reason;
+      saveData(STORAGE_KEYS.WORK, MOCK_WORK);
+    }
+  },
+
+  deleteWorkItem: async (id: string): Promise<void> => {
+    if (MockService.isSupabaseActive()) {
+      await SupabaseService.deleteWorkItem(id);
+      return;
+    }
+    const idx = MOCK_WORK.findIndex(w => w.id === id);
+    if (idx !== -1) {
+      MOCK_WORK.splice(idx, 1);
+      saveData(STORAGE_KEYS.WORK, MOCK_WORK);
+    }
+  },
+
+  // --- Templates ---
+  getTemplates: async (): Promise<Template[]> => {
+    // Note: Templates are currently only local/mock based because Supabase schema might not have it yet.
+    await delay(100);
+    return MOCK_TEMPLATES;
+  },
+
+  getTemplate: async (id: string): Promise<Template | undefined> => {
+    await delay(100);
+    return MOCK_TEMPLATES.find(t => t.id === id);
+  },
+
+  updateTemplate: async (id: string, updates: Partial<Template>): Promise<void> => {
+    await delay(200);
+    const index = MOCK_TEMPLATES.findIndex(t => t.id === id);
+    if (index !== -1) {
+      MOCK_TEMPLATES[index] = { ...MOCK_TEMPLATES[index], ...updates };
+      saveData(STORAGE_KEYS.TEMPLATES, MOCK_TEMPLATES);
+    }
+  },
+
+
+
+  // Bulk Actions
+  bulkUpdateStatus: async (ids: string[], status: 'published' | 'draft' | 'ready', type: 'pages' | 'posts' | 'social', websiteId?: string): Promise<void> => {
+    if (type === 'pages') {
+      if (MockService.isSupabaseActive()) {
+        const { error } = await supabase.from('pages').update({ status }).in('id', ids);
+        if (error) throw error;
         return;
       }
-      const index = MOCK_TARGETS.findIndex(t => t.id === id);
-      if (index !== -1) {
-        MOCK_TARGETS.splice(index, 1);
-        saveData(STORAGE_KEYS.TARGETS, MOCK_TARGETS);
+      ids.forEach(id => {
+        const p = MOCK_PAGES.find(x => x.id === id);
+        if (p) p.status = status;
+      });
+      saveData(STORAGE_KEYS.PAGES, MOCK_PAGES);
+    } else if (type === 'posts') {
+      if (MockService.isSupabaseActive()) {
+        const { error } = await supabase.from('posts').update({ status }).in('id', ids);
+        if (error) throw error;
+        return;
       }
-    },
+      ids.forEach(id => {
+        const p = MOCK_POSTS.find(x => x.id === id);
+        if (p) p.status = status;
+      });
+      saveData(STORAGE_KEYS.POSTS, MOCK_POSTS);
+    } else if (type === 'social' && websiteId) {
+      if (MockService.isSupabaseActive()) {
+        const { error } = await supabase.from('social_links').update({ status }).in('id', ids);
+        if (error) throw error;
+        return;
+      }
+      const site = MOCK_WEBSITES.find(w => w.id === websiteId);
+      if (site && site.socialLinks) {
+        ids.forEach(id => {
+          const s = site.socialLinks!.find(x => x.id === id);
+          if (s) s.status = status;
+        });
+      }
+      saveData(STORAGE_KEYS.WEBSITES, MOCK_WEBSITES);
+    }
+  },
 
-      // Work
-      getWorkItems: async (websiteId?: string): Promise<WorkItem[]> => {
-        if (MockService.isSupabaseActive()) {
-          return SupabaseService.getWorkItems(websiteId);
-        }
-        await delay(200);
-        return MOCK_WORK;
-      },
-
-        syncWorkTasks: async (websiteId?: string): Promise<void> => {
-          let campaigns: { id: string, sourceTitle: string, sourceUrl?: string, websiteId: string }[] = [];
-
-          const fetchCampaignsForSite = async (sid: string) => {
-            let site: Website | undefined;
-            if (MockService.isSupabaseActive()) {
-              const sites = await SupabaseService.getWebsites();
-              site = sites.find(w => w.id === sid);
-            } else {
-              site = MOCK_WEBSITES.find(w => w.id === sid);
-            }
-            if (!site) return [];
-
-            const currentCamps: typeof campaigns = [];
-            const pages = await MockService.getPages(sid);
-            pages.filter(p => p.mwCampaignId).forEach(p => currentCamps.push({ id: p.mwCampaignId!, sourceTitle: p.title, sourceUrl: p.url, websiteId: sid }));
-
-            const posts = await MockService.getPosts(sid);
-            posts.filter(p => p.mwCampaignId).forEach(p => currentCamps.push({ id: p.mwCampaignId!, sourceTitle: p.title, sourceUrl: p.url, websiteId: sid }));
-
-            if (site.socialLinks) {
-              site.socialLinks.filter(s => s.mwCampaignId).forEach(s => {
-                currentCamps.push({ id: s.mwCampaignId!, sourceTitle: `${s.platform} Profile`, sourceUrl: s.url, websiteId: sid });
-              });
-            }
-
-            const externals = await MockService.getExternalLinks(sid);
-            externals.filter(e => e.mwCampaignId).forEach(e => {
-              let url = e.landingPageDomain;
-              if (url && !url.startsWith('http')) url = 'https://' + url;
-              currentCamps.push({ id: e.mwCampaignId!, sourceTitle: e.title, sourceUrl: url, websiteId: sid });
-            });
-
-            return currentCamps;
-          };
-
-          // 1. Fetch ALL currently active campaigns from Microworkers to verify what's "Live"
-          let liveCampaignIds = new Set<string>();
-          try {
-            const liveRes = await fetchWithNetworkCheck(`${BACKEND_URL}/api/mw/campaigns`);
-            if (liveRes.ok) {
-              const liveData = await liveRes.json();
-              const items = liveData.items || liveData.campaigns || [];
-              items.forEach((c: any) => {
-                // Consider RUNNING, FINISHED, PAUSED, and STOPPED as valid for checking tasks
-                // Basically anything that isn't deleted or rejected
-                if (['RUNNING', 'FINISHED', 'PAUSED', 'STOPPED'].includes(c.status)) {
-                  liveCampaignIds.add(c.id);
-                }
-              });
-              console.log(`[MW Sync] Verified ${liveCampaignIds.size} live campaigns from API.`);
-            }
-          } catch (e) {
-            console.warn("[MW Sync] Could not fetch live campaign list, falling back to all known IDs.", e);
-          }
-
-          if (websiteId) {
-            campaigns = await fetchCampaignsForSite(websiteId);
-          } else {
-            const sites = await (MockService.isSupabaseActive() ? SupabaseService.getWebsites() : Promise.resolve(MOCK_WEBSITES));
-            for (const s of sites) {
-              const c = await fetchCampaignsForSite(s.id);
-              campaigns.push(...c);
-            }
-          }
-
-          // Filter: Only sync campaigns that are actually in the "Live" list from MW
-          // This solves the 404 issue for deleted/archived campaigns
-          if (liveCampaignIds.size > 0) {
-            const originalCount = campaigns.length;
-            campaigns = campaigns.filter(c => liveCampaignIds.has(c.id));
-            console.log(`[MW Sync] Filtered ${originalCount} down to ${campaigns.length} live campaigns.`);
-          } else if (!websiteId) {
-            // If Global Sync and we couldn't fetch live IDs, 
-            // DON'T fallback to all known campaigns because it will trigger 404s for old ones.
-            console.warn("[MW Sync] No live campaigns found from API. Skipping global sync to avoid 404 errors.");
-            return;
-          }
-
-          if (campaigns.length === 0) return;
-
-          try {
-            for (const camp of campaigns) {
-              console.log(`[MW Sync] Fetching tasks for campaign: ${camp.id} (${camp.sourceTitle})`);
-
-              let mwTasks: any[] = [];
-              let fetchSuccess = false;
-
-              // For "Only Live Tasks", we primarily care about SUBMITTED (NOTRATED)
-              // If the user wants to see finished/rated ones, they are in the 'Reviewed' section
-              const statusFilters = ['SUBMITTED', 'REVISION_NEEDED'];
-
-              for (const statusFilter of statusFilters) {
-                try {
-                  const url = statusFilter
-                    ? `${BACKEND_URL}/api/mw/campaigns/${camp.id}/tasks?status=${statusFilter}&limit=100`
-                    : `${BACKEND_URL}/api/mw/campaigns/${camp.id}/tasks?limit=100`;
-
-                  console.log(`[MW Sync] Trying: ${url}`);
-                  const response = await fetchWithNetworkCheck(url);
-
-                  if (response.ok) {
-                    const data = await response.json();
-
-                    // Robust task detection (MW v2 uses 'items' or 'slots', v1 used 'tasks')
-                    let tasks: any[] = [];
-                    if (Array.isArray(data)) {
-                      tasks = data;
-                    } else if (data.items && Array.isArray(data.items)) {
-                      tasks = data.items;
-                    } else if (data.slots && Array.isArray(data.slots)) {
-                      tasks = data.slots;
-                    } else if (data.tasks && Array.isArray(data.tasks)) {
-                      tasks = data.tasks;
-                    }
-
-                    // Merge tasks (avoid duplicates by ID)
-                    tasks.forEach((task: any) => {
-                      const taskId = task.id || task.taskId || task.TId;
-                      if (taskId) {
-                        const existingIndex = mwTasks.findIndex(t => (t.id === taskId || t.taskId === taskId));
-                        if (existingIndex === -1) {
-                          mwTasks.push(task);
-                        } else {
-                          // Update existing if new data has status or proofs
-                          mwTasks[existingIndex] = { ...mwTasks[existingIndex], ...task };
-                        }
-                      }
-                    });
-
-                    fetchSuccess = true;
-                  } else {
-                    console.warn(`[MW Sync] Failed with status "${statusFilter}": ${response.status}`);
-                  }
-                } catch (err: any) {
-                  console.warn(`[MW Sync] Error with status "${statusFilter}": ${err.message}`);
-                }
-              }
-
-              if (!fetchSuccess || mwTasks.length === 0) {
-                console.log(`[MW Sync] No tasks found for campaign ${camp.id}`);
-                continue;
-              }
-
-              for (const mwTask of mwTasks) {
-                const mwTaskRealId = mwTask.id || mwTask.taskId || mwTask.TId;
-                const mwId = `mw_${mwTaskRealId}`;
-
-                const { data: existing } = await supabase.from('work_items').select('*').eq('id', mwId).maybeSingle();
-
-                // Map MW status to internal WorkItem status
-                const mwStatusOriginal = (mwTask.status || '').toUpperCase();
-                let mappedStatus: WorkItem['status'] = 'completed'; // Default to Need Review
-
-                if (['RATED', 'APPROVED', 'FINISHED', 'DONE'].includes(mwStatusOriginal)) mappedStatus = 'done';
-                else if (['DENIED', 'REJECTED'].includes(mwStatusOriginal)) mappedStatus = 'rejected';
-                else if (['REVISION_NEEDED', 'REVISE'].includes(mwStatusOriginal)) mappedStatus = 'needs_revision';
-                else if (['QUIT', 'SYSTEM_REJECTED'].includes(mwStatusOriginal)) mappedStatus = 'todo'; // Or remove?
-
-                // Logic to determine if we need to fetch details or update status
-                // Update if: New task, missing proof, or status changed on MW
-                const isNew = !existing;
-                const missingProof = !existing?.proof_link;
-                const statusChanged = existing && existing.status !== mappedStatus && existing.status === 'completed'; // Only auto-update if it was pending review
-
-                if (isNew || missingProof || statusChanged) {
-                  let fullTask = mwTask;
-                  if (isNew || missingProof) {
-                    try {
-                      const detailRes = await fetchWithNetworkCheck(`${BACKEND_URL}/api/mw/campaigns/${camp.id}/tasks/${mwTaskRealId}`);
-                      if (detailRes.ok) {
-                        fullTask = await detailRes.json();
-                      }
-                    } catch (e) {
-                      console.warn(`[MW Sync] Could not fetch details for ${mwId}`);
-                    }
-                  }
-
-                  let workerId = fullTask.workerId || fullTask.worker_id || 'unknown';
-                  if (workerId === 'unknown' && typeof mwTaskRealId === 'string') {
-                    const parts = mwTaskRealId.split('_');
-                    if (parts.length >= 3) workerId = parts[2];
-                  }
-
-                  // Comprehensive proof extractor for all Microworkers campaign types
-                  const collectAllProofs = (taskObj: any) => {
-                    const textProofs: { question: string, answer: string }[] = [];
-                    const fileProofs: { url: string, name?: string }[] = [];
-
-                    // 1. Check for TTV structured answers
-                    const rawAnswers = taskObj.answers || taskObj.items || [];
-                    if (Array.isArray(rawAnswers)) {
-                      rawAnswers.forEach((ans: any, idx: number) => {
-                        const q = ans.title || ans.question || `Proof ${idx + 1}`;
-                        const a = ans.value || ans.text || ans.answer || '';
-                        if (a) textProofs.push({ question: q, answer: String(a) });
-                      });
-                    } else if (typeof rawAnswers === 'object' && rawAnswers !== null) {
-                      // Sometimes it's a map
-                      Object.entries(rawAnswers).forEach(([key, val]) => {
-                        textProofs.push({ question: key, answer: String(val) });
-                      });
-                    }
-
-                    // 2. Check for file proofs
-                    const rawFiles = taskObj.fileProofs || taskObj.files || [];
-                    if (Array.isArray(rawFiles)) {
-                      rawFiles.forEach((f: any) => {
-                        const url = typeof f === 'string' ? f : (f.url || f.link);
-                        if (url) fileProofs.push({ url, name: f.filename || f.name || 'Screenshot' });
-                      });
-                    }
-
-                    // 3. Fallback: Search the object for anything that looks like a proof URL if empty
-                    if (textProofs.length === 0 && fileProofs.length === 0) {
-                      const search = (item: any) => {
-                        if (!item) return;
-                        if (typeof item === 'string') {
-                          const val = item.trim();
-                          if (/^https?:\/\//i.test(val)) {
-                            if (val.match(/\.(jpg|jpeg|png|gif|webp|pdf)$/i) || val.includes('snipboard.io') || val.includes('prnt.sc')) {
-                              fileProofs.push({ url: val, name: 'Proof Link' });
-                            } else {
-                              textProofs.push({ question: 'Proof', answer: val });
-                            }
-                          } else if (val.length > 5 && val.includes(' ') && !val.includes('_')) {
-                            textProofs.push({ question: 'Proof', answer: val });
-                          }
-                        } else if (Array.isArray(item)) {
-                          item.forEach(search);
-                        } else if (typeof item === 'object') {
-                          Object.values(item).forEach(search);
-                        }
-                      };
-                      search(taskObj);
-                    }
-
-                    return { textProofs, fileProofs };
-                  };
-
-                  const extracted = collectAllProofs(fullTask);
-                  const proofLink = extracted.fileProofs[0]?.url || extracted.textProofs[0]?.answer || '';
-
-                  // Debug info if proof is missing
-                  let debugInfo = '';
-                  if (!proofLink) {
-                    const keys = Object.keys(fullTask).filter(k => !['description', 'id'].includes(k));
-                    debugInfo = `\n[No proof found. Keys: ${keys.join(', ')}]`;
-                  }
-
-                  const newItem: WorkItem = {
-                    id: mwId,
-                    websiteId: camp.websiteId,
-                    title: `Verify: ${camp.sourceTitle}`,
-                    description: `Worker ${workerId} submitted proof for ${camp.sourceTitle}${debugInfo}`,
-                    status: mappedStatus,
-                    priority: 'medium',
-                    assignedToUserId: 'worker',
-                    dueDate: fullTask.submittedAt?.split('T')[0] || fullTask.date || new Date().toISOString().split('T')[0],
-                    workerId: workerId,
-                    proofLink: proofLink,
-                    proofs: extracted.textProofs,
-                    fileProofs: extracted.fileProofs,
-                    mwCampaignId: camp.id,
-                    targetUrl: camp.sourceUrl
-                  };
-
-                  const { error: saveErr } = await supabase.from('work_items').upsert([{
-                    id: newItem.id,
-                    website_id: newItem.websiteId,
-                    title: newItem.title,
-                    description: newItem.description,
-                    status: newItem.status,
-                    priority: newItem.priority,
-                    assigned_to_user_id: newItem.assignedToUserId,
-                    due_date: newItem.dueDate,
-                    worker_id: newItem.workerId,
-                    proof_link: newItem.proofLink,
-                    proofs: newItem.proofs,
-                    file_proofs: newItem.fileProofs,
-                    mw_campaign_id: newItem.mwCampaignId,
-                    target_url: newItem.targetUrl
-                  }]);
-
-                  if (saveErr) {
-                    console.error(`[MW Sync] Supabase Save Error for ${mwId}:`, saveErr);
-                  } else {
-                    console.log(`[MW Sync] Saved task ${mwId} (Status: ${newItem.status})`);
-                  }
-                }
-              }
-            }
-            if (!MockService.isSupabaseActive()) {
-              saveData(STORAGE_KEYS.WORK, MOCK_WORK);
-            }
-          } catch (error) {
-            console.error("Failed to sync Microworkers tasks:", error);
-            throw error;
-          }
-        },
-
-          addWorkItem: async (item: WorkItem): Promise<void> => {
-            if (MockService.isSupabaseActive()) {
-              await supabase.from('work_items').insert([{
-                id: item.id.includes('-') ? item.id : undefined,
-                website_id: item.websiteId,
-                title: item.title,
-                description: item.description,
-                assigned_to_user_id: item.assignedToUserId,
-                due_date: item.dueDate,
-                status: item.status,
-                priority: item.priority,
-                proof_link: item.proofLink,
-                worker_id: item.workerId,
-                mw_campaign_id: item.mwCampaignId,
-                rejection_reason: item.rejectionReason
-              }]);
-              return;
-            }
-            MOCK_WORK.push(item);
-          },
-
-            updateWorkItemStatus: async (id: string, status: WorkItem['status'], reason?: string, campaignId?: string): Promise<void> => {
-              // 1. If it's a Microworkers task (starts with mw_), try to rate it on MW
-              if (id.startsWith('mw_')) {
-                // Use provided campaignId or try to find it in existing tasks
-                let finalCampId = campaignId;
-                if (!finalCampId && MockService.isSupabaseActive()) {
-                  const { data } = await supabase.from('work_items').select('mw_campaign_id').eq('id', id).maybeSingle();
-                  finalCampId = data?.mw_campaign_id;
-                }
-
-                if (finalCampId) {
-                  const mwTaskId = id.replace('mw_', '');
-                  let rating: 'OK' | 'NOK' | 'REVISE' | null = null;
-                  if (status === 'done') rating = 'OK';
-                  if (status === 'rejected') rating = 'NOK';
-                  if (status === 'needs_revision') rating = 'REVISE';
-
-                  if (rating) {
-                    try {
-                      await MockService.rateMicroworkersTask(finalCampId, mwTaskId, rating, reason);
-                    } catch (e: any) {
-                      console.error("MW Rating failed:", e);
-                      throw new Error(`Failed to rate task on Microworkers: ${e.message}`);
-                    }
-                  }
-                } else {
-                  console.warn(`[MW] Could not find campaign ID for task ${id}, skipping MW rating.`);
-                }
-              }
-
-              if (MockService.isSupabaseActive()) {
-                await SupabaseService.updateWorkItemStatus(id, status, reason);
-                return;
-              }
-              const item = MOCK_WORK.find(w => w.id === id);
-              if (item) {
-                item.status = status;
-                if (reason) item.rejectionReason = reason;
-                saveData(STORAGE_KEYS.WORK, MOCK_WORK);
-              }
-            },
-
-              deleteWorkItem: async (id: string): Promise<void> => {
-                if (MockService.isSupabaseActive()) {
-                  await SupabaseService.deleteWorkItem(id);
-                  return;
-                }
-                const idx = MOCK_WORK.findIndex(w => w.id === id);
-                if (idx !== -1) {
-                  MOCK_WORK.splice(idx, 1);
-                  saveData(STORAGE_KEYS.WORK, MOCK_WORK);
-                }
-              },
-
-                // --- Templates ---
-                getTemplates: async (): Promise<Template[]> => {
-                  // Note: Templates are currently only local/mock based because Supabase schema might not have it yet.
-                  await delay(100);
-                  return MOCK_TEMPLATES;
-                },
-
-                  getTemplate: async (id: string): Promise<Template | undefined> => {
-                    await delay(100);
-                    return MOCK_TEMPLATES.find(t => t.id === id);
-                  },
-
-                    updateTemplate: async (id: string, updates: Partial<Template>): Promise<void> => {
-                      await delay(200);
-                      const index = MOCK_TEMPLATES.findIndex(t => t.id === id);
-                      if (index !== -1) {
-                        MOCK_TEMPLATES[index] = { ...MOCK_TEMPLATES[index], ...updates };
-                        saveData(STORAGE_KEYS.TEMPLATES, MOCK_TEMPLATES);
-                      }
-                    },
-
-
-
-                      // Bulk Actions
-                      bulkUpdateStatus: async (ids: string[], status: 'published' | 'draft' | 'ready', type: 'pages' | 'posts' | 'social', websiteId?: string): Promise<void> => {
-                        if (type === 'pages') {
-                          if (MockService.isSupabaseActive()) {
-                            const { error } = await supabase.from('pages').update({ status }).in('id', ids);
-                            if (error) throw error;
-                            return;
-                          }
-                          ids.forEach(id => {
-                            const p = MOCK_PAGES.find(x => x.id === id);
-                            if (p) p.status = status;
-                          });
-                          saveData(STORAGE_KEYS.PAGES, MOCK_PAGES);
-                        } else if (type === 'posts') {
-                          if (MockService.isSupabaseActive()) {
-                            const { error } = await supabase.from('posts').update({ status }).in('id', ids);
-                            if (error) throw error;
-                            return;
-                          }
-                          ids.forEach(id => {
-                            const p = MOCK_POSTS.find(x => x.id === id);
-                            if (p) p.status = status;
-                          });
-                          saveData(STORAGE_KEYS.POSTS, MOCK_POSTS);
-                        } else if (type === 'social' && websiteId) {
-                          if (MockService.isSupabaseActive()) {
-                            const { error } = await supabase.from('social_links').update({ status }).in('id', ids);
-                            if (error) throw error;
-                            return;
-                          }
-                          const site = MOCK_WEBSITES.find(w => w.id === websiteId);
-                          if (site && site.socialLinks) {
-                            ids.forEach(id => {
-                              const s = site.socialLinks!.find(x => x.id === id);
-                              if (s) s.status = status;
-                            });
-                          }
-                          saveData(STORAGE_KEYS.WEBSITES, MOCK_WEBSITES);
-                        }
-                      },
-
-                        bulkDelete: async (ids: string[], type: 'pages' | 'posts' | 'social', websiteId?: string): Promise<void> => {
-                          if (type === 'pages') {
-                            if (MockService.isSupabaseActive()) {
-                              const { error } = await supabase.from('pages').delete().in('id', ids);
-                              if (error) throw error;
-                              return;
-                            }
-                            ids.forEach(id => {
-                              const idx = MOCK_PAGES.findIndex(x => x.id === id);
-                              if (idx !== -1) MOCK_PAGES.splice(idx, 1);
-                            });
-                            saveData(STORAGE_KEYS.PAGES, MOCK_PAGES);
-                          } else if (type === 'posts') {
-                            if (MockService.isSupabaseActive()) {
-                              const { error } = await supabase.from('posts').delete().in('id', ids);
-                              if (error) throw error;
-                              return;
-                            }
-                            ids.forEach(id => {
-                              const idx = MOCK_POSTS.findIndex(x => x.id === id);
-                              if (idx !== -1) MOCK_POSTS.splice(idx, 1);
-                            });
-                            saveData(STORAGE_KEYS.POSTS, MOCK_POSTS);
-                          } else if (type === 'social' && websiteId) {
-                            if (MockService.isSupabaseActive()) {
-                              const { error } = await supabase.from('social_links').delete().in('id', ids);
-                              if (error) throw error;
-                              return;
-                            }
-                            const site = MOCK_WEBSITES.find(w => w.id === websiteId);
-                            if (site && site.socialLinks) {
-                              ids.forEach(id => {
-                                const idx = site.socialLinks!.findIndex(x => x.id === id);
-                                if (idx !== -1) site.socialLinks!.splice(idx, 1);
-                              });
-                            }
-                            saveData(STORAGE_KEYS.WEBSITES, MOCK_WEBSITES);
-                          }
-                        }
+  bulkDelete: async (ids: string[], type: 'pages' | 'posts' | 'social', websiteId?: string): Promise<void> => {
+    if (type === 'pages') {
+      if (MockService.isSupabaseActive()) {
+        const { error } = await supabase.from('pages').delete().in('id', ids);
+        if (error) throw error;
+        return;
+      }
+      ids.forEach(id => {
+        const idx = MOCK_PAGES.findIndex(x => x.id === id);
+        if (idx !== -1) MOCK_PAGES.splice(idx, 1);
+      });
+      saveData(STORAGE_KEYS.PAGES, MOCK_PAGES);
+    } else if (type === 'posts') {
+      if (MockService.isSupabaseActive()) {
+        const { error } = await supabase.from('posts').delete().in('id', ids);
+        if (error) throw error;
+        return;
+      }
+      ids.forEach(id => {
+        const idx = MOCK_POSTS.findIndex(x => x.id === id);
+        if (idx !== -1) MOCK_POSTS.splice(idx, 1);
+      });
+      saveData(STORAGE_KEYS.POSTS, MOCK_POSTS);
+    } else if (type === 'social' && websiteId) {
+      if (MockService.isSupabaseActive()) {
+        const { error } = await supabase.from('social_links').delete().in('id', ids);
+        if (error) throw error;
+        return;
+      }
+      const site = MOCK_WEBSITES.find(w => w.id === websiteId);
+      if (site && site.socialLinks) {
+        ids.forEach(id => {
+          const idx = site.socialLinks!.findIndex(x => x.id === id);
+          if (idx !== -1) site.socialLinks!.splice(idx, 1);
+        });
+      }
+      saveData(STORAGE_KEYS.WEBSITES, MOCK_WEBSITES);
+    }
+  }
 };
